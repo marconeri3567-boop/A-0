@@ -1,116 +1,48 @@
 #include "ToolDispatcher.hpp"
 
 #include <exception>
-#include <iostream>
 
-void ToolDispatcher::registerTool(
-    const std::string& intent,
-    ToolHandler handler)
+void ToolDispatcher::registerTool(const std::string& intent, ToolHandler handler)
 {
-    if (intent.empty())
-    {
-        return;
-    }
-
-    if (!handler)
-    {
-        return;
-    }
-
-    tools_[intent] = std::move(handler);
+    if (!intent.empty() && handler) tools_[intent] = std::move(handler);
 }
 
-bool ToolDispatcher::hasTool(
-    const std::string& intent) const
+bool ToolDispatcher::hasTool(const std::string& intent) const
 {
-    return tools_.find(intent)
-           != tools_.end();
+    return tools_.find(intent) != tools_.end();
 }
 
-ToolResult ToolDispatcher::dispatch(
-    const ToolRequest& request) const
+ToolResult ToolDispatcher::dispatch(const ToolRequest& request) const
 {
-    ToolResult result;
-
-    if (request.intent.empty())
-    {
-        result.success = false;
-        result.message =
-            "Empty intent.";
-
-        return result;
-    }
-
-    const auto it =
-        tools_.find(request.intent);
-
+    if (request.intent.empty()) return {false, "Empty intent."};
+    const auto it = tools_.find(request.intent);
     if (it == tools_.end())
-    {
-        result.success = false;
-        result.message =
-            "No handler registered for intent: "
-            + request.intent;
-
-        return result;
-    }
-
-    try
-    {
-        return it->second(request);
-    }
-    catch (const std::exception& ex)
-    {
-        result.success = false;
-        result.message =
-            std::string("Handler exception: ")
-            + ex.what();
-
-        return result;
-    }
-    catch (...)
-    {
-        result.success = false;
-        result.message =
-            "Unknown handler exception.";
-
-        return result;
-    }
+        return {false, "No handler registered for intent: " + request.intent};
+    try { return it->second(request); }
+    catch (const std::exception& exception)
+    { return {false, std::string("Handler exception: ") + exception.what()}; }
+    catch (...) { return {false, "Unknown handler exception."}; }
 }
 
-ToolRequest ToolDispatcher::createRequest(
-    const PredictionResult& prediction) const
+ToolRequest ToolDispatcher::createRequest(const PredictionResult& prediction,
+                                          const std::string& previousInput,
+                                          const std::string& previousIntent,
+                                          std::size_t historySize) const
 {
-    ToolRequest request;
-
-    request.intent =
-        prediction.intent;
-
-    request.confidence =
-        prediction.confidence;
-
-    return request;
+    return {prediction.intent, {}, prediction.confidence,
+            previousInput, previousIntent, historySize};
 }
 
-std::size_t ToolDispatcher::size() const noexcept
-{
-    return tools_.size();
-}
+std::size_t ToolDispatcher::size() const noexcept { return tools_.size(); }
 
-std::vector<std::string>
-ToolDispatcher::availableTools() const
+std::vector<std::string> ToolDispatcher::availableTools() const
 {
     std::vector<std::string> intents;
-
-    intents.reserve(
-        tools_.size());
-
-    for (const auto& [intent, handler]
-         : tools_)
+    intents.reserve(tools_.size());
+    for (const auto& [intent, handler] : tools_)
     {
         (void)handler;
-
         intents.push_back(intent);
     }
-
     return intents;
 }
