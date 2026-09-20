@@ -3,7 +3,7 @@ set -euo pipefail
 
 PROJECT_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 EXECUTABLE="${PROJECT_ROOT}/bin/local_intent_ai"
-DEFAULT_DATASET="${PROJECT_ROOT}/data/intents.json"
+DEFAULT_DATASET="${PROJECT_ROOT}/res/dataset/JSON/EnglishToBash.json"
 DATASET_FILE="${1:-${DEFAULT_DATASET}}"
 
 if [[ ! -x "${EXECUTABLE}" ]]; then

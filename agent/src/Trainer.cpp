@@ -9,7 +9,11 @@ namespace fs = std::filesystem;
 bool Trainer::train(const std::string& datasetPath, const std::string& outputDir,
                     std::size_t epochs, std::size_t batchSize)
 {
-    if (!datasetLoader_.load(datasetPath)) return false;
+    DatasetConverter converter;
+    DatasetPreparation preparation;
+    if (!converter.prepare(datasetPath, outputDir, preparation)) return false;
+
+    if (!datasetLoader_.load(preparation.path)) return false;
     const auto& samples = datasetLoader_.getSamples();
     vocabulary_.build(samples);
     if (vocabulary_.empty()) return false;

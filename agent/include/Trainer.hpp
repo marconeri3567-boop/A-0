@@ -1,5 +1,6 @@
 #pragma once
 
+#include "DatasetConverter.hpp"
 #include "DatasetLoader.hpp"
 #include "Vocabulary.hpp"
 #include "NeuralModel.hpp"
@@ -15,39 +16,23 @@
  *
  * JSON Dataset
  *      |
- * DatasetLoader
+ *      DatasetConverter
  *      |
- * Vocabulary
+ *      DatasetLoader
  *      |
- * Bag Of Words
+ *      Vocabulary
  *      |
- * NeuralModel
+ *      Bag Of Words
  *      |
- * Salvataggio Modello
+ *      NeuralModel
+ *      |
+ *      Salvataggio Modello
  */
 class Trainer
 {
 public:
-
     Trainer() = default;
 
-    /**
-     * @brief Addestra il modello da dataset JSON.
-     *
-     * Esegue:
-     * - caricamento dataset
-     * - costruzione vocabolario
-     * - encoding intent
-     * - training rete
-     * - salvataggio modelli
-     *
-     * @param datasetPath file JSON input
-     * @param outputDir directory models
-     * @param epochs epoche training
-     * @param batchSize dimensione batch
-     *
-     * @return true se completato
-     */
     bool train(
         const std::string& datasetPath,
         const std::string& outputDir,
@@ -55,50 +40,15 @@ public:
         std::size_t batchSize = 8
     );
 
-    /**
-     * @brief Accesso al modello addestrato.
-     */
-    [[nodiscard]]
-    const NeuralModel& getModel() const noexcept;
-
-    /**
-     * @brief Accesso al vocabolario.
-     */
-    [[nodiscard]]
-    const Vocabulary& getVocabulary() const noexcept;
-
-    /**
-     * @brief Numero intenti.
-     */
-    [[nodiscard]]
-    std::size_t intentCount() const noexcept;
-
-    /**
-     * @brief Numero token vocabolario.
-     */
-    [[nodiscard]]
-    std::size_t vocabularySize() const noexcept;
+    [[nodiscard]] const NeuralModel& getModel() const noexcept;
+    [[nodiscard]] const Vocabulary& getVocabulary() const noexcept;
+    [[nodiscard]] std::size_t intentCount() const noexcept;
+    [[nodiscard]] std::size_t vocabularySize() const noexcept;
 
 private:
+    void buildIntentMap(const std::vector<std::string>& intents);
+    [[nodiscard]] int labelToIndex(const std::string& intent) const;
 
-    /**
-     * @brief Costruisce la mappa intent -> indice.
-     */
-    void buildIntentMap(
-        const std::vector<std::string>& intents
-    );
-
-    /**
-     * @brief Restituisce l'indice di una label.
-     */
-    [[nodiscard]]
-    int labelToIndex(
-        const std::string& intent
-    ) const;
-
-    /**
-     * @brief Converte dataset in input tiny-dnn.
-     */
     bool buildTrainingData(
         const std::vector<TrainingSample>& samples,
         std::vector<tiny_dnn::vec_t>& inputs,
@@ -106,17 +56,9 @@ private:
     );
 
 private:
-
     DatasetLoader datasetLoader_;
-
     Vocabulary vocabulary_;
-
     NeuralModel neuralModel_;
-
     std::vector<std::string> intents_;
-
-    std::unordered_map<
-        std::string,
-        std::size_t
-    > intentMap_;
+    std::unordered_map<std::string, std::size_t> intentMap_;
 };

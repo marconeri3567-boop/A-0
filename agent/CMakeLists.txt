@@ -12,8 +12,6 @@ endif()
 
 include(FetchContent)
 
-# Keep the build self-contained when the development packages are not installed.
-# SQLite remains a system dependency because it is a runtime database library.
 find_package(Eigen3 QUIET)
 if(NOT Eigen3_FOUND)
     FetchContent_Declare(
@@ -46,6 +44,7 @@ FetchContent_MakeAvailable(tiny_dnn)
 set(TINY_DNN_INCLUDE_DIR "${tiny_dnn_SOURCE_DIR}")
 
 add_executable(local_intent_ai
+    src/DatasetConverter.cpp
     src/DatasetLoader.cpp
     src/Vocabulary.cpp
     src/NeuralModel.cpp
