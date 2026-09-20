@@ -1,0 +1,292 @@
+## Fase 1: Dataset JSON
+
+Invece di addestrare testo libero, usa esempi strutturati:
+
+```json
+[
+  {
+    "input": "apri firefox",
+    "intent": "open_browser"
+  },
+  {
+    "input": "avvia vscode",
+    "intent": "open_editor"
+  },
+  {
+    "input": "chiudi spotify",
+    "intent": "close_music"
+  }
+]
+```
+
+Questo riduce enormemente la complessità.
+
+---
+
+## Fase 2: Parser JSON
+
+Ti consiglio:
+
+```text
+nlohmann/json
+```
+
+Header-only e perfetto per C++.
+
+Esempio:
+
+```cpp
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
+
+std::ifstream file("dataset.json");
+json data = json::parse(file);
+```
+
+---
+
+## Fase 3: Encoding delle parole
+
+La rete neurale non capisce:
+
+```text
+"apri firefox"
+```
+
+Devi convertirlo in numeri.
+
+Inizialmente usa una semplice Bag of Words.
+
+Vocabolario:
+
+```text
+apri
+chiudi
+firefox
+spotify
+vscode
+```
+
+Input:
+
+```text
+"apri firefox"
+
+↓
+
+[1,0,1,0,0]
+```
+
+---
+
+## Fase 4: Rete neurale
+
+Architettura iniziale:
+
+```text
+Input Layer
+    ↓
+Dense(64)
+    ↓
+ReLU
+    ↓
+Dense(32)
+    ↓
+ReLU
+    ↓
+Dense(N intenti)
+    ↓
+Softmax
+```
+
+Classi:
+
+```cpp
+Matrix
+Layer
+DenseLayer
+ActivationLayer
+NeuralNetwork
+Trainer
+```
+
+---
+
+## Fase 5: Dataset Loader
+
+Classe:
+
+```cpp
+class Dataset
+{
+public:
+    Matrix X;
+    Matrix Y;
+
+    void load(const std::string& path);
+};
+```
+
+Che:
+
+1. legge il JSON
+2. costruisce il vocabolario
+3. trasforma le frasi in vettori
+4. genera i target
+
+---
+
+## Fase 6: Training
+
+Loop:
+
+```cpp
+for(epoch=0; epoch<1000; epoch++)
+{
+    forward();
+    backward();
+    update();
+}
+```
+
+Optimizer iniziale:
+
+```text
+SGD
+```
+
+Successivamente:
+
+```text
+Adam
+```
+
+---
+
+## Fase 7: Inferenza
+
+Input:
+
+```text
+"apri visual studio"
+```
+
+Output:
+
+```json
+{
+  "intent":"open_editor",
+  "confidence":0.94
+}
+```
+
+---
+
+## Fase 8: Tool Layer
+
+Qui arriva la parte interessante.
+
+```cpp
+if(intent == "open_browser")
+{
+    system("am start ...");
+}
+```
+
+oppure
+
+```cpp
+if(intent == "open_editor")
+{
+    launchVSCode();
+}
+```
+
+La rete non controlla direttamente il sistema.
+
+La rete produce l'intento.
+
+Il codice C++ esegue l'azione.
+
+---
+
+## Librerie che userei
+
+Su Termux:
+
+```text
+clang
+cmake
+git
+Eigen
+nlohmann/json
+sqlite3
+```
+
+Struttura progetto:
+
+```text
+project/
+│
+├── data/
+│   └── dataset.json
+│
+├── include/
+│   ├── matrix.hpp
+│   ├── network.hpp
+│   ├── layer.hpp
+│   └── dataset.hpp
+│
+├── src/
+│   ├── main.cpp
+│   ├── network.cpp
+│   ├── trainer.cpp
+│   └── dataset.cpp
+│
+└── models/
+    └── weights.bin
+```
+
+---
+
+## Evoluzione futura
+
+Una volta funzionante, puoi passare da:
+
+```json
+{
+  "input":"apri firefox",
+  "intent":"open_browser"
+}
+```
+
+a:
+
+```json
+{
+  "input":"apri firefox",
+  "intent":"open_app",
+  "entity":"firefox"
+}
+```
+
+Introducendo un sistema tipo:
+
+```text
+Intent Classification
++
+Entity Extraction
+```
+
+che è il primo passo verso un vero agente locale.
+
+Per il tuo caso, il traguardo realistico è:
+
+1. Eigen per i tensori/matrici.
+2. nlohmann/json per il dataset.
+3. Classificatore di intenti addestrato su JSON.
+4. Salvataggio pesi in file binario.
+5. Integrazione con tool Android tramite Termux e `am start`.
+
+È abbastanza piccolo da essere sviluppato interamente su smartphone, ma abbastanza potente da diventare la base di un assistente locale personalizzato.
