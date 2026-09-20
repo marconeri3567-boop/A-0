@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MiniGPT</string>
+    <string name="hint_type_message">Scrivi un messaggio…</string>
+    <string name="send">Invia</string>
+    <string name="assistant_title">MiniGPT</string>
+</resources>

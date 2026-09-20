@@ -1,0 +1,7 @@
+# Keep user-specific configurations out of version control
+local.properties
+/.idea/
+.gradle/
+/build/
+**/build/
+*.iml

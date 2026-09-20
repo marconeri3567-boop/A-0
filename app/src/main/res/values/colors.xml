@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg_dark">#0F172A</color>
+    <color name="bg_soft">#111827</color>
+    <color name="user_bubble">#2563EB</color>
+    <color name="bot_bubble">#1F2937</color>
+    <color name="text_primary">#F8FAFC</color>
+    <color name="text_secondary">#CBD5E1</color>
+</resources>
