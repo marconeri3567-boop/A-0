@@ -1,0 +1,10 @@
+[
+  {"input":"open the browser","intent":"open_browser"},
+  {"input":"launch firefox","intent":"open_browser"},
+  {"input":"open the editor","intent":"open_editor"},
+  {"input":"launch vscode","intent":"open_editor"},
+  {"input":"play music","intent":"play_music"},
+  {"input":"start spotify","intent":"play_music"},
+  {"input":"search the web","intent":"search_web"},
+  {"input":"look this up online","intent":"search_web"}
+]

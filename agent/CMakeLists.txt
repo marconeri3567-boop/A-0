@@ -1,83 +1,51 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(
-    LocalIntentAI
-    VERSION 1.0.0
-    DESCRIPTION "Offline Intent Classifier for Android Termux"
-    LANGUAGES CXX
-)
-
-##############################################################################
-# C++ Standard
-##############################################################################
+project(LocalIntentAI VERSION 1.0.0 DESCRIPTION "Offline Intent Classifier" LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-##############################################################################
-# Build Type
-##############################################################################
-
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
 
-##############################################################################
-# Mobile Optimizations
-##############################################################################
+include(FetchContent)
 
-set(CMAKE_CXX_FLAGS_RELEASE
-    "-O3 -DNDEBUG -ffast-math -funroll-loops"
-)
+# Keep the build self-contained when the development packages are not installed.
+# SQLite remains a system dependency because it is a runtime database library.
+find_package(Eigen3 QUIET)
+if(NOT Eigen3_FOUND)
+    FetchContent_Declare(
+        eigen
+        URL https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.tar.gz
+    )
+    FetchContent_MakeAvailable(eigen)
+endif()
 
-##############################################################################
-# Threads
-##############################################################################
-
-find_package(Threads REQUIRED)
-
-##############################################################################
-# Eigen
-##############################################################################
-
-find_package(Eigen3 REQUIRED)
-
-##############################################################################
-# SQLite3
-##############################################################################
+find_package(nlohmann_json QUIET)
+if(NOT nlohmann_json_FOUND)
+    FetchContent_Declare(
+        nlohmann_json
+        URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
+    )
+    FetchContent_MakeAvailable(nlohmann_json)
+endif()
 
 find_package(SQLite3 REQUIRED)
+find_package(Threads REQUIRED)
 
-##############################################################################
-# nlohmann/json
-##############################################################################
-
-find_package(nlohmann_json REQUIRED)
-
-##############################################################################
-# tiny-dnn
-##############################################################################
-
-set(TINY_DNN_PATH
-    ${PROJECT_SOURCE_DIR}/external/tiny-dnn
+FetchContent_Declare(
+    tiny_dnn
+    GIT_REPOSITORY https://github.com/tiny-dnn/tiny-dnn.git
+    GIT_TAG master
+    GIT_SHALLOW TRUE
 )
+FetchContent_MakeAvailable(tiny_dnn)
 
-##############################################################################
-# Include Directories
-##############################################################################
+set(TINY_DNN_INCLUDE_DIR "${tiny_dnn_SOURCE_DIR}")
 
-include_directories(
-    ${PROJECT_SOURCE_DIR}/include
-    ${TINY_DNN_PATH}
-    ${EIGEN3_INCLUDE_DIR}
-)
-
-##############################################################################
-# Source Files
-##############################################################################
-
-set(SOURCES
+add_executable(local_intent_ai
     src/DatasetLoader.cpp
     src/Vocabulary.cpp
     src/NeuralModel.cpp
@@ -88,71 +56,31 @@ set(SOURCES
     src/main.cpp
 )
 
-##############################################################################
-# Executable
-##############################################################################
-
-add_executable(
-    local_intent_ai
-    ${SOURCES}
+target_include_directories(local_intent_ai PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${TINY_DNN_INCLUDE_DIR}
 )
 
-##############################################################################
-# Link Libraries
-##############################################################################
-
-target_link_libraries(
-    local_intent_ai
-    PRIVATE
-        Eigen3::Eigen
-        SQLite::SQLite3
-        nlohmann_json::nlohmann_json
-        Threads::Threads
+target_link_libraries(local_intent_ai PRIVATE
+    Eigen3::Eigen
+    SQLite::SQLite3
+    nlohmann_json::nlohmann_json
+    Threads::Threads
 )
 
-##############################################################################
-# Compiler Warnings
-##############################################################################
-
-target_compile_options(
-    local_intent_ai
-    PRIVATE
-        -Wall
-        -Wextra
-        -Wpedantic
-        -Wconversion
-        -Wshadow
+target_compile_options(local_intent_ai PRIVATE
+    -Wall -Wextra -Wpedantic -Wconversion -Wshadow
 )
 
-##############################################################################
-# Output Directories
-##############################################################################
-
-set_target_properties(
-    local_intent_ai
-    PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY
-            ${PROJECT_SOURCE_DIR}/bin
+target_compile_definitions(local_intent_ai PRIVATE
+    LOCAL_INTENT_AI_PROJECT_DIR="${PROJECT_SOURCE_DIR}"
 )
 
-##############################################################################
-# Models Directory
-##############################################################################
-
-file(MAKE_DIRECTORY
-    ${PROJECT_SOURCE_DIR}/models
+set_target_properties(local_intent_ai PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/bin"
 )
 
-##############################################################################
-# Data Directory
-##############################################################################
-
-file(MAKE_DIRECTORY
-    ${PROJECT_SOURCE_DIR}/data
-)
-
-##############################################################################
-# Tests
-##############################################################################
+file(MAKE_DIRECTORY "${PROJECT_SOURCE_DIR}/models")
+file(MAKE_DIRECTORY "${PROJECT_SOURCE_DIR}/data")
 
 enable_testing()
