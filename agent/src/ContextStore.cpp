@@ -1,11 +1,13 @@
 #include "ContextStore.hpp"
 
 #include <chrono>
+#include <ctime>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+#include <utility>
 
 #include <nlohmann/json.hpp>
 
@@ -34,21 +36,18 @@ bool ContextStore::load(const std::string& filePath)
 {
     context_ = {};
     std::ifstream input(filePath);
-    if (!input.is_open())
-    {
-        return !fs::exists(filePath);
-    }
+    if (!input.is_open()) return !fs::exists(filePath);
 
     try
     {
         const json document = json::parse(input);
         if (!document.is_object()) return false;
-
         context_.currentInput = document.value("current_input", "");
         context_.currentIntent = document.value("current_intent", "");
         context_.currentConfidence = document.value("current_confidence", 0.0f);
 
-        const auto history = document.value("history", json::array());
+        if (!document.contains("history")) return true;
+        const auto& history = document.at("history");
         if (!history.is_array()) return false;
         for (const auto& item : history)
         {
@@ -81,12 +80,8 @@ bool ContextStore::update(const std::string& input, const std::string& intent,
         context_.history.push_back({input, intent, confidence, nowIso8601()});
         context_.currentInput = input;
         context_.currentIntent = intent;
-        context_.currentConfidence = confidence;
     }
-    else
-    {
-        context_.currentConfidence = confidence;
-    }
+    context_.currentConfidence = confidence;
 
     try
     {
@@ -103,10 +98,8 @@ bool ContextStore::update(const std::string& input, const std::string& intent,
         for (const auto& entry : context_.history)
         {
             document["history"].push_back({
-                {"input", entry.input},
-                {"intent", entry.intent},
-                {"confidence", entry.confidence},
-                {"created_at", entry.createdAt}
+                {"input", entry.input}, {"intent", entry.intent},
+                {"confidence", entry.confidence}, {"created_at", entry.createdAt}
             });
         }
 
