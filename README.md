@@ -1,87 +1,67 @@
-# MiniGPT Android
+# A-0 — MiniGPT Android con agente locale
 
-Questo repository è stato trasformato in una app Android minimale ispirata all'interfaccia di ChatGPT/OpenAI: una chat single-screen, con messaggi utente e risposta del bot, progettata come prototipo facile da far crescere con un backend AI reale.
+A-0 è un'app Android di chat offline. La UI invia ogni messaggio a un agente di intenti locale, caricato dall'APK, invece di usare una risposta mock nell'Activity o un'API cloud.
 
-## Obiettivo
-
-L'idea iniziale del progetto era un assistente locale in C++ basato su classificazione intenti e routing decisionale. Ora il focus è stato spostato su una demo Android dedicata alla chat conversazionale, mantenendo l'esperienza semplice, leggibile e pronta per evoluzione.
-
-## Cosa cambia rispetto al progetto C++
-
-- la vecchia base `agent/` è stata mantenuta come riferimento storico;
-- la nuova direzione è un'app Android moderna e minimale;
-- l'interfaccia è simile a ChatGPT: elenco messaggi, input testuale e risposta del bot;
-- la logica di risposta è locale e mock, ma facilmente sostituibile con OpenAI, Gemini, Azure OpenAI o un backend interno.
-
-## Struttura del progetto
+## Flusso aggiornato
 
 ```text
-.
-├── app/
-│   ├── build.gradle.kts
-│   ├── proguard-rules.pro
-│   └── src/
-│       ├── main/
-│       │   ├── AndroidManifest.xml
-│       │   ├── java/com/example/minigpt/
-│       │   │   ├── ChatAdapter.kt
-│       │   │   └── MainActivity.kt
-│       │   └── res/
-│           ├── layout/
-│           │   ├── activity_main.xml
-│           │   └── item_chat_message.xml
-│           ├── values/
-│           │   ├── colors.xml
-│           │   ├── strings.xml
-│           │   └── themes.xml
-│           └── xml/
-├── agent/                  # vecchio prototipo C++ preservato per riferimento
-├── README.md
-├── build.gradle.kts
-├── gradle.properties
-├── settings.gradle.kts
-└── .gitignore
+messaggio utente
+      ↓
+MainActivity → LocalIntentAgent
+      ↓             ↓
+ RecyclerView   assets/local_model.json
+      ↓
+risposta + intento + confidenza
 ```
 
-## Funzionalità della demo
+`LocalIntentAgent` carica il modello da `app/src/main/assets/local_model.json`, assegna un intento tramite scoring delle parole chiave e produce la risposta sul dispositivo. Non sono richiesti account, chiavi API o connessione Internet. Il dataset e il trainer C++ originali restano in `agent/` come pipeline desktop e riferimento per futuri export del modello.
 
-- chat UI minimale a schermo unico;
-- prompt dell'utente e risposta del bot;
-- layout Material 3 con palette scura simile a ChatGPT;
-- logica di risposta locale con regole semplici;
-- pronta per essere collegata a un backend AI reale.
+## Build dell'APK
 
-## Requisiti
-
-- Android Studio Ladybug o versione successiva;
-- JDK 17;
-- Android SDK 34;
-- dispositivo/emulatore Android con API 24+.
-
-## Esecuzione
-
-1. Apri il repository in Android Studio.
-2. Sincronizza il progetto con Gradle.
-3. Seleziona un emulatore o un dispositivo fisico.
-4. Avvia l'app.
-
-### Build con Gradle (se usato da CLI)
+Requisiti: JDK 17, Android SDK 34, Gradle (oppure `gradlew`) e un ambiente Android configurato.
 
 ```bash
-./gradlew assembleDebug
+# APK debug installabile
+bash ./build-apk.sh
+
+# APK release non firmato (per distribuzione va firmato con una chiave Android)
+bash ./build-apk.sh --release
 ```
 
-Se il wrapper non è presente, usa Android Studio per generare la build e sincronizzare il progetto.
+Gli artefatti vengono copiati in `dist/`. Per installare il debug APK su un dispositivo con ADB:
 
-## Come evolverla
+```bash
+adb install -r dist/A-0-debug.apk
+```
 
-In una seconda fase puoi collegare l'app a un vero servizio AI:
+Se usi Android Studio puoi aprire il progetto, sincronizzare Gradle ed eseguire `app` su un emulatore o dispositivo API 24+.
 
-- OpenAI API con `OkHttp` o `Retrofit`;
-- Gemini / Azure OpenAI;
-- backend personale con streaming risposta;
-- persistenza chat locale in Room o DataStore.
+## Struttura
 
-## Note
+- `app/`: modulo Android Kotlin.
+- `app/src/main/java/com/example/minigpt/LocalIntentAgent.kt`: runtime locale del modello.
+- `app/src/main/assets/local_model.json`: modello di intenti incluso nell'APK.
+- `app/src/main/java/com/example/minigpt/MainActivity.kt`: flusso chat asincrono verso l'agente.
+- `agent/`: agente C++ desktop, dataset, training e predizione storici.
+- `build-apk.sh`: build riproducibile e raccolta dell'APK in `dist/`.
 
-Questa è una demo minimale e leggera, pensata per dimostrare la trasformazione del progetto in un'app Android "simile a ChatGPT" senza dipendenze esterne pesanti. Il comportamento corrente è locale e deterministico, ma l'architettura è pronta ad essere ampliata.
+## Modello locale e privacy
+
+Il modello incluso è un classificatore leggero di intenti, non un LLM generativo. Il testo viene elaborato in memoria sul dispositivo e non viene trasmesso. Per estendere il comportamento, aggiorna gli intenti e le keyword in `local_model.json`; per un modello neurale più grande occorre aggiungere un export mobile (ad esempio TFLite/ONNX) e il relativo runtime.
+
+## Sviluppo del modello desktop
+
+La pipeline C++ può essere compilata separatamente:
+
+```bash
+cd agent
+bash ./build.sh
+bash ./train.sh
+bash ./predict.sh "open the browser"
+```
+
+L'APK non esegue il binario desktop: usa l'export leggero in `assets`, così la build Android rimane portabile e completamente offline.
+
+## Licenza e stato
+
+Prototipo open source. La release è non firmata e deve essere firmata prima della pubblicazione su store Android.

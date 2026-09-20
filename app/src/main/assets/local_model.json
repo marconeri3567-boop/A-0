@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "source": "agent/res/dataset/JSON/EnglishToBash.json",
+  "intents": [
+    {
+      "name": "greeting",
+      "keywords": ["ciao", "hello", "salve", "hi", "buongiorno"],
+      "response": "Ciao! Sono l'agente locale di A-0. Come posso aiutarti?"
+    },
+    {
+      "name": "help",
+      "keywords": ["aiuto", "help", "cosa puoi", "funzioni", "comandi"],
+      "response": "Posso classificare richieste localmente, mantenendo i tuoi messaggi sul dispositivo. Prova a chiedermi del design o di aprire qualcosa."
+    },
+    {
+      "name": "architecture",
+      "keywords": ["design", "architettura", "modello", "locale", "offline"],
+      "response": "L'app usa un agente di intenti locale caricato da assets/local_model.json: nessuna API remota e nessun dato inviato fuori dal dispositivo."
+    },
+    {
+      "name": "open_tool",
+      "keywords": ["apri", "lancia", "browser", "editor", "musica"],
+      "response": "Ho riconosciuto una richiesta di strumento ({prompt}). In questa build classifico l'intento localmente; le azioni esterne sono disabilitate per sicurezza."
+    },
+    {
+      "name": "status",
+      "keywords": ["come stai", "stato", "versione", "prezzo", "costo"],
+      "response": "Agente locale attivo. Il modello è incluso nell'APK e l'app funziona senza connessione."
+    }
+  ]
+}
