@@ -32,6 +32,7 @@ add_executable(local_intent_ai
     src/Trainer.cpp
     src/Predictor.cpp
     src/ToolDispatcher.cpp
+    src/DecisionTree.cpp
     src/Database.cpp
     src/main.cpp)
 target_include_directories(local_intent_ai PRIVATE ${PROJECT_SOURCE_DIR}/include ${TINY_DNN_INCLUDE_DIR})

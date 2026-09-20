@@ -1,6 +1,7 @@
 #include "Trainer.hpp"
 #include "Predictor.hpp"
 #include "ToolDispatcher.hpp"
+#include "DecisionTree.hpp"
 #include "Database.hpp"
 #include "ContextStore.hpp"
 
@@ -41,6 +42,12 @@ namespace
         });
         dispatcher.registerTool("search_web", [](const ToolRequest&) {
             return ToolResult{true, "Search tool matched"};
+        });
+        dispatcher.registerTool("clarify_request", [](const ToolRequest&) {
+            return ToolResult{false, "Prediction confidence is too low; please clarify the request."};
+        });
+        dispatcher.registerTool("repeat_action", [](const ToolRequest&) {
+            return ToolResult{true, "Repeated action confirmed by conversation context."};
         });
     }
 
@@ -117,8 +124,6 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
-    // Reload persisted state for every request, so separate process invocations
-    // continue the same conversation.
     ContextStore contextStore;
     if (!contextStore.load(CONTEXT_FILE))
     {
@@ -150,12 +155,25 @@ int main(int argc, char* argv[])
         previousContext.currentInput,
         previousContext.currentIntent,
         previousContext.history.size());
-    const ToolResult toolResult = dispatcher.dispatch(request);
+
+    const DecisionTree decisionTree = DecisionTree::createDefault();
+    const DecisionOutcome decision = decisionTree.evaluate(request);
+    ToolRequest routedRequest = request;
+    routedRequest.intent = decision.route;
+    const ToolResult toolResult = decision.accepted
+        ? dispatcher.dispatch(routedRequest)
+        : ToolResult{false, decision.reason};
 
     json response = {
         {"input", text},
         {"intent", prediction.intent},
         {"confidence", prediction.confidence},
+        {"decision", {
+            {"accepted", decision.accepted},
+            {"route", decision.route},
+            {"reason", decision.reason},
+            {"depth", decision.depth}
+        }},
         {"previous_context", {
             {"input", previousContext.currentInput},
             {"intent", previousContext.currentIntent},
